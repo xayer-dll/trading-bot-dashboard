@@ -21,7 +21,7 @@ export interface Stats {
 }
 export interface BotState {
   running: boolean; price: number; rsi: number;
-  signal: "BUY" | "SELL" | "HOLD"; balance_usdt: number;
+  signal: "BUY" | "SELL" | "HOLD"; balance_usdt: number; equity_usdt: number;
   position: Position; last_update: string | null; error: string | null;
   trades: Trade[]; iteration: number;
   price_history: PricePoint[]; equity_history: EquityPoint[];
@@ -29,7 +29,7 @@ export interface BotState {
 }
 
 const DEFAULT: BotState = {
-  running: false, price: 0, rsi: 0, signal: "HOLD", balance_usdt: 0,
+  running: false, price: 0, rsi: 0, signal: "HOLD", balance_usdt: 0, equity_usdt: 0,
   position: { active: false, entry_price: 0, quantity: 0, pnl: 0 },
   last_update: null, error: null, trades: [], iteration: 0,
   price_history: [], equity_history: [],

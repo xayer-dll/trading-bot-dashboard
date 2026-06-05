@@ -211,9 +211,9 @@ export default function Dashboard() {
                 value={<AnimatedValue value={data.rsi} format={v => v.toFixed(2)}/>}
                 sub={data.rsi < 35 ? "AL Bolgesi (<35)" : data.rsi > 65 ? "SAT Bolgesi (>65)" : "Notr"}
                 pct={data.rsi}/>
-              <StatCard label="Bakiye" color="#8b5cf6" icon={Wallet}
-                value={<AnimatedValue value={data.balance_usdt} format={v => fmtUSD(v)}/>}
-                sub={`${(data as any).leverage ?? 1}x Kaldirac`}/>
+              <StatCard label="Portfoy Degeri" color="#8b5cf6" icon={Wallet}
+                value={<AnimatedValue value={(data as any).equity_usdt || data.balance_usdt} format={v => fmtUSD(v)}/>}
+                sub={`Serbest: ${fmtUSD(data.balance_usdt)} - Spot`}/>
               <StatCard label="Toplam P&L" color={pnlColor} icon={stats.total_pnl >= 0 ? TrendingUp : TrendingDown}
                 value={<span style={{ color: pnlColor }}>
                   <AnimatedValue value={stats.total_pnl} format={v => fmtPnl(v)}/>
