@@ -16,7 +16,7 @@ interface Props {
   };
 }
 
-const AVAILABLE_SYMBOLS = ["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","ADAUSDT"];
+// Coin listesi artik API'den geliyor (active_symbols) — hardcode yok
 
 function Slider({ label, value, min, max, step = 1, format, onChange, icon: Icon, color }: {
   label: string; value: number; min: number; max: number; step?: number;
@@ -180,7 +180,7 @@ export default function SettingsPanel({ open, onClose, current }: Props) {
                   Takip Edilen Çiftler
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {AVAILABLE_SYMBOLS.map(s => (
+                  {current.active_symbols.map(s => (
                     <button key={s} onClick={() => toggleSymbol(s)}
                       className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all
                         ${symbols.includes(s)

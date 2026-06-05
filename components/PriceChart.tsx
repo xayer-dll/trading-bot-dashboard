@@ -13,7 +13,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs shadow-xl">
       <p className="text-slate-400 mb-1">{label}</p>
       <p className="text-white font-bold">
-        ${payload[0]?.value?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        ${payload[0]?.value?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
       </p>
     </div>
   );

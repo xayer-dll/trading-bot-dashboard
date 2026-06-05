@@ -43,13 +43,13 @@ export default function PairCard({ symbol, data, active, onClick }: Props) {
       </div>
 
       <p className="text-lg font-black text-white mb-1">
-        {data.price ? `$${data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+        {data.price ? `$${data.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
       </p>
 
       <div className="flex items-center justify-between text-xs">
         <span className="text-slate-500">RSI: <span className="text-slate-300">{data.rsi.toFixed(1)}</span></span>
         <span className={pnlPos ? "text-emerald-400" : "text-red-400"}>
-          {pnlPos ? "+" : ""}{data.stats.total_pnl.toFixed(2)} USDT
+          {pnlPos ? "+" : ""}{data.stats.total_pnl.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})} USDT
         </span>
       </div>
 
@@ -57,7 +57,7 @@ export default function PairCard({ symbol, data, active, onClick }: Props) {
         <div className={`mt-2 pt-2 border-t border-slate-800 flex items-center gap-1 text-xs
           ${data.position.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
           {data.position.pnl >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-          Açık: {data.position.pnl >= 0 ? "+" : ""}{data.position.pnl.toFixed(4)} USDT
+          Acik: {data.position.pnl >= 0 ? "+" : ""}{data.position.pnl.toLocaleString("tr-TR",{minimumFractionDigits:4,maximumFractionDigits:4})} USDT
         </div>
       )}
     </motion.button>

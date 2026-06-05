@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
-const API  = process.env.NEXT_PUBLIC_API_URL  ?? "http://localhost:8000";
-const WS   = (process.env.NEXT_PUBLIC_WS_URL  ?? "ws://localhost:8000") + "/ws";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export interface Position {
   active: boolean; entry_price: number; quantity: number; pnl: number;
@@ -42,42 +41,51 @@ export function useBotData() {
   const [data, setData]           = useState<BotState>(DEFAULT);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading]     = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    let ws: WebSocket;
-    let retry: ReturnType<typeof setTimeout>;
-    function connect() {
-      ws = new WebSocket(WS);
-      ws.onopen    = () => setConnected(true);
-      ws.onclose   = () => { setConnected(false); retry = setTimeout(connect, 3000); };
-      ws.onerror   = () => ws.close();
-      // Gelen veriyi default değerlerle birleştir (eksik alan varsa çökmez)
-      ws.onmessage = (e) => {
-        try {
-          const incoming = JSON.parse(e.data);
+    // HTTP Polling: her 2 saniyede /status'tan veri cek
+    // WebSocket'ten daha guvenilir (Fly.io, Vercel, her yerde calisir)
+    async function poll() {
+      try {
+        const res = await globalThis.fetch(`${API}/status`);
+        if (res.ok) {
+          const incoming = await res.json();
+          setConnected(true);
           setData(prev => ({ ...DEFAULT, ...prev, ...incoming,
             stats:    { ...DEFAULT.stats,    ...(incoming.stats    ?? {}) },
             position: { ...DEFAULT.position, ...(incoming.position ?? {}) },
           }));
-        } catch {}
-      };
+        } else {
+          setConnected(false);
+        }
+      } catch {
+        setConnected(false);
+      }
     }
-    connect();
-    return () => { ws?.close(); clearTimeout(retry); };
+
+    // Hemen ilk veriyi cek
+    poll();
+    // Sonra her 2 saniyede tekrarla
+    intervalRef.current = setInterval(poll, 2000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
   const startBot = useCallback(async () => {
     setLoading(true);
-    try { await fetch(`${API}/start`, { method: "POST" }); } finally { setLoading(false); }
+    try { await globalThis.fetch(`${API}/start`, { method: "POST" }); } finally { setLoading(false); }
   }, []);
 
   const stopBot = useCallback(async () => {
     setLoading(true);
-    try { await fetch(`${API}/stop`, { method: "POST" }); } finally { setLoading(false); }
+    try { await globalThis.fetch(`${API}/stop`, { method: "POST" }); } finally { setLoading(false); }
   }, []);
 
   const updateSettings = useCallback(async (tp: number, sl: number) => {
-    await fetch(`${API}/settings?take_profit=${tp}&stop_loss=${sl}`, { method: "POST" });
+    await globalThis.fetch(`${API}/settings?take_profit=${tp}&stop_loss=${sl}`, { method: "POST" });
   }, []);
 
   return { data, connected, loading, startBot, stopBot, updateSettings };

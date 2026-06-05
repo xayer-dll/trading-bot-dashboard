@@ -11,6 +11,8 @@ import TradeHistory from "@/components/TradeHistory";
 import SettingsPanel from "@/components/SettingsPanel";
 import BacktestPanel from "@/components/BacktestPanel";
 import PairCard from "@/components/PairCard";
+import PolymarketWidget from "@/components/PolymarketWidget";
+import TradingViewChart from "@/components/TradingViewChart";
 import { useRouter } from "next/navigation";
 import {
   Activity, TrendingUp, TrendingDown, Wallet, BarChart2,
@@ -20,10 +22,17 @@ import {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// Turk para formati: 62.489,99 (nokta binlik, virgul ondalik)
+const fmtUSD = (v: number, decimals = 2) =>
+  "$" + v.toLocaleString("tr-TR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+const fmtPnl = (v: number) =>
+  (v >= 0 ? "+" : "") + v.toLocaleString("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const fmtPct = (v: number) => `%${v.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+
 const fadeUp = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
 const stagger = { show: { transition: { staggerChildren: 0.07 } } };
 
-type Tab = "live" | "pairs" | "backtest" | "futures";
+type Tab = "live" | "pairs" | "backtest" | "futures" | "chart";
 
 function Card({ children, className = "", glow = "" }: { children: React.ReactNode; className?: string; glow?: string }) {
   return <motion.div variants={fadeUp} className={`card p-5 ${glow} ${className}`}>{children}</motion.div>;
@@ -104,10 +113,11 @@ export default function Dashboard() {
   };
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "live",     label: "Canlı",    icon: Activity   },
-    { id: "pairs",    label: "Çiftler",  icon: Layers     },
-    { id: "backtest", label: "Backtest", icon: FlaskConical },
-    { id: "futures",  label: "Futures",  icon: Zap        },
+    { id: "live",     label: "Canli",     icon: Activity    },
+    { id: "chart",    label: "Grafik",    icon: BarChart2   },
+    { id: "pairs",    label: "Ciftler",   icon: Layers      },
+    { id: "backtest", label: "Backtest",  icon: FlaskConical },
+    { id: "futures",  label: "Futures",   icon: Zap         },
   ];
 
   return (
@@ -194,29 +204,29 @@ export default function Dashboard() {
           <motion.div key="live" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div variants={stagger} initial="hidden" animate="show"
               className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-              <StatCard label="BTC Fiyatı" color="#3b82f6" icon={TrendingUp}
-                value={<AnimatedValue value={data.price} format={v => `$${v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`}/>}
-                sub="Piyasa fiyatı"/>
-              <StatCard label="RSI (14)" color={data.rsi < 30 ? "#10b981" : data.rsi > 70 ? "#ef4444" : "#f59e0b"} icon={BarChart2}
+              <StatCard label="BTC Fiyati" color="#3b82f6" icon={TrendingUp}
+                value={<AnimatedValue value={data.price} format={v => fmtUSD(v)}/>}
+                sub="Piyasa fiyati"/>
+              <StatCard label="RSI (14)" color={data.rsi < 35 ? "#10b981" : data.rsi > 65 ? "#ef4444" : "#f59e0b"} icon={BarChart2}
                 value={<AnimatedValue value={data.rsi} format={v => v.toFixed(2)}/>}
-                sub={data.rsi < 30 ? "Asiri Satilmis" : data.rsi > 70 ? "Asiri Alinmis" : "Notrl"}
+                sub={data.rsi < 35 ? "AL Bolgesi (<35)" : data.rsi > 65 ? "SAT Bolgesi (>65)" : "Notr"}
                 pct={data.rsi}/>
               <StatCard label="Bakiye" color="#8b5cf6" icon={Wallet}
-                value={<AnimatedValue value={data.balance_usdt} format={v => `$${v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`}/>}
-                sub="Serbest USDT"/>
+                value={<AnimatedValue value={data.balance_usdt} format={v => fmtUSD(v)}/>}
+                sub={`${(data as any).leverage ?? 1}x Kaldirac`}/>
               <StatCard label="Toplam P&L" color={pnlColor} icon={stats.total_pnl >= 0 ? TrendingUp : TrendingDown}
                 value={<span style={{ color: pnlColor }}>
-                  <AnimatedValue value={stats.total_pnl} format={v => `${v >= 0 ? "+" : ""}${v.toFixed(4)}`}/>
+                  <AnimatedValue value={stats.total_pnl} format={v => fmtPnl(v)}/>
                   <span className="text-xs ml-1">USDT</span></span>}
                 sub={`${stats.total_trades} kapatilmis`}/>
               <StatCard label="Win Rate" color={stats.win_rate >= 50 ? "#10b981" : "#ef4444"} icon={Trophy}
-                value={<AnimatedValue value={stats.win_rate} format={v => `%${v.toFixed(1)}`}/>}
+                value={<AnimatedValue value={stats.win_rate} format={v => fmtPct(v)}/>}
                 sub={`${stats.win_trades}/${stats.total_trades}`} pct={stats.win_rate}/>
-              <StatCard label="En iyi/kötü" color="#6366f1" icon={ShieldAlert}
+              <StatCard label="En iyi/kotu" color="#6366f1" icon={ShieldAlert}
                 value={<span className="text-base">
-                  <span className="text-emerald-400">+{stats.best_trade.toFixed(2)}</span>
+                  <span className="text-emerald-400">+{stats.best_trade.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
                   <span className="text-slate-600 mx-1">/</span>
-                  <span className="text-red-400">{stats.worst_trade.toFixed(2)}</span></span>}
+                  <span className="text-red-400">{stats.worst_trade.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})}</span></span>}
                 sub="USDT"/>
             </motion.div>
 
@@ -240,8 +250,8 @@ export default function Dashboard() {
                   <Sec>Acik Pozisyon</Sec>
                   {position.active ? (
                     <div className="space-y-2.5">
-                      {[["Giris", `$${position.entry_price.toLocaleString("en-US",{minimumFractionDigits:2})}`],
-                        ["Miktar", `${position.quantity.toFixed(6)} BTC`]].map(([l,v]) => (
+                      {[["Giris", fmtUSD(position.entry_price)],
+                        ["Miktar", `${position.quantity.toLocaleString("tr-TR",{minimumFractionDigits:6})} BTC`]].map(([l,v]) => (
                         <div key={l} className="flex justify-between text-xs">
                           <span className="text-slate-500">{l}</span>
                           <span className="text-white font-mono">{v}</span>
@@ -250,7 +260,7 @@ export default function Dashboard() {
                         <span className="text-slate-500">P&L</span>
                         <motion.span key={position.pnl} initial={{ scale: 1.1 }} animate={{ scale: 1 }}
                           className={`font-mono font-bold text-sm ${position.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {position.pnl >= 0 ? "+" : ""}{position.pnl.toFixed(4)} USDT
+                          {fmtPnl(position.pnl)} USDT
                         </motion.span>
                       </div>
                       <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[10px] text-slate-500">
@@ -273,22 +283,66 @@ export default function Dashboard() {
                   <Sec>Bakiye Eğrisi (Equity Curve)</Sec>
                   {equity_history.length > 1 && (
                     <span className={`text-xs font-bold ${stats.total_pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                      {stats.total_pnl >= 0 ? "+" : ""}{stats.total_pnl.toFixed(4)} USDT
+                      {fmtPnl(stats.total_pnl)} USDT
                     </span>)}
                 </div>
                 <EquityChart history={equity_history}/>
               </Card>
             </motion.div>
 
-            <motion.div variants={fadeUp} initial="hidden" animate="show">
-              <Card>
-                <div className="flex items-center justify-between mb-3">
-                  <Sec>Islem Gecmisi</Sec>
-                  <span className="text-[10px] text-slate-600">{trades.length} islem</span>
-                </div>
-                <TradeHistory trades={trades}/>
-              </Card>
+            <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+              <motion.div variants={fadeUp} className="lg:col-span-2">
+                <Card>
+                  <div className="flex items-center justify-between mb-3">
+                    <Sec>Islem Gecmisi</Sec>
+                    <span className="text-[10px] text-slate-600">{trades.length} islem</span>
+                  </div>
+                  <TradeHistory trades={trades}/>
+                </Card>
+              </motion.div>
+              <motion.div variants={fadeUp}>
+                <PolymarketWidget/>
+              </motion.div>
             </motion.div>
+          </motion.div>
+        )}
+
+        {/* ── TRADINGVIEW GRAFIK ────────────────────────────────────── */}
+        {tab === "chart" && (
+          <motion.div key="chart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="card p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest">
+                  TradingView Profesyonel Grafik
+                </p>
+                <div className="flex gap-1">
+                  {["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"].map(sym => (
+                    <button key={sym} onClick={() => changeSymbol(sym)}
+                      className={`px-2 py-1 rounded text-[10px] font-bold border transition-all
+                        ${activeSym === sym
+                          ? "bg-blue-500/20 border-blue-500/50 text-blue-300"
+                          : "border-slate-700 text-slate-500 hover:text-slate-300"}`}>
+                      {sym.replace("USDT", "")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <TradingViewChart symbol={`BINANCE:${activeSym}`} height={500} />
+            </div>
+            <div className="card p-4">
+              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mb-2">
+                Webhook Entegrasyonu
+              </p>
+              <p className="text-xs text-slate-400 mb-2">
+                TradingView alarmlarini bota bagla:
+              </p>
+              <div className="bg-slate-800/80 rounded-lg p-3 text-xs font-mono text-slate-300 select-all">
+                https://furkan.fly.dev/webhook/tradingview
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Alarm mesaji: {`{"symbol": "BTCUSDT", "action": "BUY", "price": {{close}}, "source": "tradingview"}`}
+              </p>
+            </div>
           </motion.div>
         )}
 
@@ -316,7 +370,7 @@ export default function Dashboard() {
                       <p className="text-xs font-bold text-white mb-1">{sym.replace("USDT","")}</p>
                       <p className="text-[10px] text-slate-500">İşlem: {pData.stats?.total_trades ?? 0}</p>
                       <p className={`text-xs font-bold ${(pData.stats?.total_pnl ?? 0) >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                        {(pData.stats?.total_pnl ?? 0) >= 0 ? "+" : ""}{(pData.stats?.total_pnl ?? 0).toFixed(4)} USDT
+                        {fmtPnl(pData.stats?.total_pnl ?? 0)} USDT
                       </p>
                     </div>
                   );

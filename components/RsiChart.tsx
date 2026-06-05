@@ -8,7 +8,7 @@ import { PricePoint } from "@/hooks/useBotData";
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   const v = payload[0]?.value ?? 0;
-  const color = v < 30 ? "#10b981" : v > 70 ? "#ef4444" : "#f59e0b";
+  const color = v < 35 ? "#10b981" : v > 65 ? "#ef4444" : "#f59e0b";
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs shadow-xl">
       <p className="text-slate-400">{label}</p>
@@ -37,12 +37,10 @@ export default function RsiChart({ history }: { history: PricePoint[] }) {
         <YAxis domain={[0, 100]} tick={{ fill: "#475569", fontSize: 10 }}
           axisLine={false} tickLine={false} width={28} ticks={[0, 30, 50, 70, 100]} />
         <Tooltip content={<CustomTooltip />} />
-        {/* Aşırı satılmış çizgisi */}
-        <ReferenceLine y={30} stroke="#10b981" strokeDasharray="4 4" strokeWidth={1}>
-        </ReferenceLine>
-        {/* Aşırı alınmış çizgisi */}
-        <ReferenceLine y={70} stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1}>
-        </ReferenceLine>
+        {/* Asiri satilmis cizgisi (BUY esigi) */}
+        <ReferenceLine y={35} stroke="#10b981" strokeDasharray="4 4" strokeWidth={1} />
+        {/* Asiri alinmis cizgisi (SELL esigi) */}
+        <ReferenceLine y={65} stroke="#ef4444" strokeDasharray="4 4" strokeWidth={1} />
         <Area dataKey="rsi" fill="url(#rsiGrad)" stroke="#f59e0b"
           strokeWidth={1.5} dot={false} activeDot={{ r: 3, fill: "#fbbf24" }} />
       </AreaChart>

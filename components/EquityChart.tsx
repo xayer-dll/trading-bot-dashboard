@@ -11,7 +11,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs shadow-xl">
       <p className="text-slate-400">{label}</p>
       <p className="text-white font-bold">
-        ${payload[0]?.value?.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        ${payload[0]?.value?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
       </p>
     </div>
   );
@@ -50,7 +50,7 @@ export default function EquityChart({ history }: { history: EquityPoint[] }) {
           axisLine={false} tickLine={false} />
         <YAxis tick={{ fill: "#475569", fontSize: 10 }} axisLine={false}
           tickLine={false} width={62}
-          tickFormatter={(v) => `$${v.toLocaleString()}`} />
+          tickFormatter={(v) => `$${v.toLocaleString("tr-TR")}`} />
         <Tooltip content={<CustomTooltip />} />
         <Area dataKey="balance" fill={`url(#${gradId})`} stroke={color}
           strokeWidth={2} dot={false} activeDot={{ r: 3 }} />
